@@ -26,6 +26,7 @@ import com.google.gson.stream.JsonWriter;
 
 import mm4d.jsonhelpers.LauncherProfile;
 import mm4d.jsonhelpers.Profile;
+import mm4d.jsonhelpers.UHCSSuppressor;
 
 public class MM4D {
 
@@ -78,7 +79,7 @@ public class MM4D {
 		if (curDir.exists() && curDir.isDirectory()) {
 			if (Boolean.parseBoolean(cfg.getProperty("makeBackups"))) {
 				try {
-					ZipFileUtil.zipDirectory(curDir, new File(dirName + ".zip"));
+					ZipFileUtil.zipDirectory(curDir, new File(dirName + ".backup.zip"));
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
@@ -99,6 +100,7 @@ public class MM4D {
 				if (curFile.exists()) {
 					if (curFile.isDirectory())
 						deleteDir(dirName + "\\" + curFile.getName());
+					curFile.delete();
 				}
 			}
 		}
@@ -128,8 +130,7 @@ public class MM4D {
 	}
 
 	private static void forge() {
-		// TODO: cleanup try/catch, add returns, add dialogue, beautify json
-		// output, remove useHopperCrashService if true
+		// TODO: cleanup try/catch, add returns, add advanced dialogue
 		String forgejar = cfg.getProperty("forgejar", "");
 		File[] files = new File(forgeFolder).listFiles();
 		if (forgejar.isEmpty() || !filePresent(forgejar, files)) {
@@ -145,7 +146,7 @@ public class MM4D {
 			return;
 		}
 
-		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		Gson gson = new GsonBuilder().setPrettyPrinting().registerTypeAdapter(Profile.class, new UHCSSuppressor()).create();
 		JsonReader reader = null;
 		try {
 			reader = new JsonReader(new FileReader(mcPath + lpjson));
@@ -177,19 +178,20 @@ public class MM4D {
 			profiles.remove("forge");
 		lp.selectedProfile = profileName;
 
-		JsonWriter writer = null;
+		FileWriter writer = null;
 		try {
-			writer = new JsonWriter(new FileWriter(mcPath + lpjson));
+			writer = new FileWriter(mcPath + lpjson, false);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		if (writer == null)
 			return;
-		gson.toJson(lp, LauncherProfile.class, writer);
+		System.out.println(gson.toJson(lp, LauncherProfile.class));
 		try {
+			writer.write(gson.toJson(lp, LauncherProfile.class));
 			writer.close();
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (IOException e1) {
+			e1.printStackTrace();
 		}
 
 		File curDir = new File(profileDir);

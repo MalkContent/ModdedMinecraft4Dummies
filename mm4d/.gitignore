@@ -7,6 +7,6 @@
 /config/
 /forge/
 mm4d.cfg
-mods.zip
-config.zip
+mods.backup.zip
+config.backup.zip
 forge*.log
